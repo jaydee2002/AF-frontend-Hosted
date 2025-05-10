@@ -47,33 +47,50 @@ function Favorites() {
   };
 
   return (
-    <div className="min-h-screen pt-24 flex flex-col bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <Header onSearch={handleSearch} onFilter={handleFilter} />
-      <main className="container max-w-6xl mx-auto flex-grow px-4">
-        <h1 className="text-3xl font-extrabold text-gray-800 mb-6">
+      <main
+        className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 flex-grow"
+        aria-busy={loading}
+      >
+        {/* Responsive Heading */}
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 mb-4 sm:mb-6">
           Favorites
         </h1>
+
+        {/* Loading State */}
         {loading && (
-          // Display skeleton cards in the same grid layout
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {[...Array(4)].map((_, index) => (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
+            {[...Array(window.innerWidth < 640 ? 4 : 8)].map((_, index) => (
               <SkeletonCard key={index} />
             ))}
           </div>
         )}
-        {error && <p className="text-center text-red-500 py-8">{error}</p>}
+
+        {/* Error State */}
+        {error && (
+          <p className="text-center text-red-500 text-sm sm:text-base py-6 sm:py-8">
+            {error}
+          </p>
+        )}
+
+        {/* Not Logged In State */}
         {!user && !loading && (
-          <p className="text-center text-gray-600 py-8">
+          <p className="text-center text-gray-600 text-sm sm:text-base py-6 sm:py-8">
             Please log in to view your favorite countries.
           </p>
         )}
+
+        {/* Empty Favorites State */}
         {user && !loading && !error && favorites.length === 0 && (
-          <p className="text-center text-gray-600 py-8">
+          <p className="text-center text-gray-600 text-sm sm:text-base py-6 sm:py-8">
             No favorite countries added yet.
           </p>
         )}
+
+        {/* Favorites Grid */}
         {user && !loading && !error && favorites.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
             {favorites.map((country) => (
               <CountryCard key={country.cca3} country={country} />
             ))}

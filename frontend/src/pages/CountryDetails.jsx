@@ -5,7 +5,19 @@ import Footer from "../components/Footer";
 import { getCountryByCode } from "../services/api";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import NewsComponent from "../components/NewsComponent";
-import GlobeComponent from "../components/GlobeComponent";
+import WeatherComponent from "../components/WeatherComponent";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default marker icon issue (in case fallback is needed)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 function CountryDetails() {
   const { code } = useParams();
@@ -14,6 +26,10 @@ function CountryDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Use Vite's environment variable system
+  const API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY || "YOUR_API_KEY";
+  console.log("API Key:", API_KEY);
+
   useEffect(() => {
     const fetchCountry = async () => {
       try {
@@ -21,6 +37,7 @@ function CountryDetails() {
         setCountry(data);
         setLoading(false);
       } catch (err) {
+        console.error("Country fetch error:", err.message);
         setError("Failed to load country details");
         setLoading(false);
       }
@@ -36,27 +53,78 @@ function CountryDetails() {
     console.log("Filter:", region);
   };
 
-  return (
-    <div className="min-h-screen flex pt-24  flex-col bg-gradient-to-b from-gray-100 to-gray-200">
-      <Header onSearch={handleSearch} onFilter={handleFilter} />
-      <main className="container max-w-6xl mx-auto py-10 flex-grow">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="group mb-8 flex items-center gap-2 rounded-lg px-5 py-3 text-black  transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label="Go back to previous page"
-        >
-          <ArrowLeft
-            size={18}
-            className="group-hover:-translate-x-1 transition-transform"
-          />
-          <span className="text-base font-semibold">Back</span>
-        </button>
+  const createCustomIcon = () => {
+    return L.divIcon({
+      html: `
+      <div class="intense-red-pointer">
+        <style>
+          .intense-red-pointer {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            background-color: #ef4444; /* red-500 */
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow:
+              0 0 8px rgba(239, 68, 68, 0.8),
+              0 0 15px rgba(239, 68, 68, 0.6),
+              0 0 30px rgba(239, 68, 68, 0.4);
+            transform: translate(-50%, -50%);
+            animation: flash 1s infinite alternate;
+          }
 
+          .intense-red-pointer::before,
+          .intense-red-pointer::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            background-color: rgba(239, 68, 68, 0.3);
+            z-index: -1;
+            animation: pulse-ring 1.2s infinite ease-out;
+          }
+
+          .intense-red-pointer::after {
+            animation-delay: 0.6s;
+          }
+
+          @keyframes flash {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2); }
+          }
+
+          @keyframes pulse-ring {
+            0% {
+              transform: translate(-50%, -50%) scale(1);
+              opacity: 0.6;
+            }
+            100% {
+              transform: translate(-50%, -50%) scale(2.5);
+              opacity: 0;
+            }
+          }
+        </style>
+      </div>
+    `,
+      className: "",
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
+    });
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-100 to-gray-200 pt-24">
+      <Header onSearch={handleSearch} onFilter={handleFilter} />
+      <main className="container max-w-6xl mx-auto flex-grow ">
         {/* Loading State */}
         {loading && (
           <div
-            className="bg-white p-8 rounded-2xl  animate-pulse"
+            className="bg-white p-8 rounded-2xl animate-pulse"
             aria-live="polite"
           >
             <div className="flex flex-col md:flex-row gap-8">
@@ -88,23 +156,66 @@ function CountryDetails() {
         {/* Country Details */}
         {country && (
           <article
-            className="bg-white p-6 sm:p-8 rounded-2xl  border-2 border-gray-200 transform transition-all duration-500 animate-fade-in"
+            className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-gray-200 transform transition-all duration-500 animate-fade-in"
             aria-labelledby="country-title"
           >
-            <div className="w-full">
-              <GlobeComponent
-                latlng={country.latlng}
-                name={country.name.common}
-                population={country.population}
+            {/* Back Button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="group mb-2 flex items-center gap-2 rounded-lg px-5 py-3 text-black transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Go back to previous page"
+            >
+              <ArrowLeft
+                size={18}
+                className="group-hover:-translate-x-1 transition-transform"
               />
-            </div>
+              <span className="text-base font-semibold">Back</span>
+            </button>
+            {/* 2D Map */}
+            {country.latlng && country.latlng.length === 2 && (
+              <div className="w-full h-80 mb-6 rounded-xl overflow-hidden border border-gray-200">
+                <MapContainer
+                  center={[country.latlng[0], country.latlng[1]]}
+                  zoom={5}
+                  style={{ height: "100%", width: "100%" }}
+                  className="rounded-xl"
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  <Marker
+                    position={[country.latlng[0], country.latlng[1]]}
+                    icon={createCustomIcon()}
+                  >
+                    <Popup>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={
+                            country.flags.png ||
+                            "https://via.placeholder.com/20x15"
+                          }
+                          alt={`Flag of ${country.name.common}`}
+                          className="w-5 h-auto"
+                        />
+                        <span>{country.name.common}</span>
+                      </div>
+                    </Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
+            )}
+
+            {/* Country Info and Flag */}
             <div className="flex flex-col md:flex-row gap-6 md:gap-8">
               {/* Flag Image */}
               <div className="w-full md:w-1/2">
                 <img
-                  src={country.flags.png}
+                  src={
+                    country.flags.png || "https://via.placeholder.com/320x240"
+                  }
                   alt={`Flag of ${country.name.common}`}
-                  className="w-full h-64 sm:h-80 object-cover rounded-xl border border-gray-200 "
+                  className="w-full h-64 sm:h-80 object-cover rounded-xl border border-gray-200"
                 />
               </div>
               {/* Country Info */}
@@ -189,6 +300,13 @@ function CountryDetails() {
                 </div>
               </div>
             </div>
+
+            {/* Weather Component */}
+            <WeatherComponent
+              lat={country.latlng?.[0]}
+              lng={country.latlng?.[1]}
+              apiKey={API_KEY}
+            />
           </article>
         )}
       </main>

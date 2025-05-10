@@ -17,8 +17,8 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Limit to 16 countries initially
-  const INITIAL_LIMIT = 16;
+  // Responsive initial limit: 6 for mobile (2 columns x 3 rows), 16 for larger screens
+  const INITIAL_LIMIT = window.innerWidth < 640 ? 6 : 16;
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -41,7 +41,6 @@ function Home() {
     if (!query.trim()) {
       try {
         setLoading(true);
-        // Artificial delay for testing
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const data = await getAllCountries();
         setCountries(data);
@@ -58,7 +57,6 @@ function Home() {
 
     try {
       setLoading(true);
-      // Artificial delay for testing
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const data = await searchCountriesByName(query);
       setCountries(data);
@@ -79,7 +77,6 @@ function Home() {
     if (!region) {
       try {
         setLoading(true);
-        // Artificial delay for testing
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const data = await getAllCountries();
         setCountries(data);
@@ -96,7 +93,6 @@ function Home() {
 
     try {
       setLoading(true);
-      // Artificial delay for testing
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const data = await getCountriesByRegion(region);
       setCountries(data);
@@ -122,40 +118,55 @@ function Home() {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header onSearch={handleSearch} onFilter={handleFilter} />
       <main
-        className="container max-w-6xl mx-auto pb-12 flex-grow"
+        className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 flex-grow"
         aria-busy={loading}
       >
-        <section className="w-full h-[550px] bg-black">
+        {/* Responsive Cover Section */}
+        <section className="w-full h-[60vh] sm:h-[70vh] lg:h-[550px] bg-black mb-6 sm:mb-6">
           <CoverSection />
         </section>
-        <h1 className="text-3xl font-extrabold text-gray-800 my-6">
+
+        {/* Responsive Heading */}
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 mb-4 sm:mb-6">
           All Countries
         </h1>
+
+        {/* Loading State */}
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {[...Array(16)].map((_, index) => (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
+            {[...Array(INITIAL_LIMIT)].map((_, index) => (
               <SkeletonCard key={index} />
             ))}
           </div>
         )}
-        {error && <p className="text-center text-red-500 py-8">{error}</p>}
+
+        {/* Error State */}
+        {error && (
+          <p className="text-center text-red-500 text-sm sm:text-base py-6 sm:py-8">
+            {error}
+          </p>
+        )}
+
+        {/* Empty State */}
         {!loading && !error && displayedCountries.length === 0 && (
-          <p className="text-center text-gray-600 py-8">
+          <p className="text-center text-gray-600 text-sm sm:text-base py-6 sm:py-8">
             No countries match your search or filter.
           </p>
         )}
+
+        {/* Countries Grid */}
         {!loading && !error && displayedCountries.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
               {displayedCountries.map((country) => (
                 <CountryCard key={country.cca3} country={country} />
               ))}
             </div>
             {!showAll && countries.length > INITIAL_LIMIT && (
-              <div className="mt-8 text-center">
+              <div className="mt-6 sm:mt-8 text-center">
                 <button
                   onClick={handleShowAll}
-                  className="bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black"
+                  className="bg-black text-white px-4 sm:px-6 py-2 sm:py-3 rounded-md font-medium text-sm sm:text-base hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-black active:bg-gray-900"
                   aria-label="Show all countries"
                 >
                   Show All Countries
