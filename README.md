@@ -4,7 +4,7 @@
 
 A React-based frontend application that consumes the REST Countries API to display country information, including name, capital, region, population, flag, and languages. The app supports searching by name, filtering by region, viewing detailed country information, user authentication, and managing favorite countries. It is styled with Tailwind CSS, tested with Jest and React Testing Library, and deployed on Vercel.
 
-https://rest-countries-app-xyz.vercel.app
+rest-countries-app-sandy.vercel.app
 
 ## Features
 
@@ -59,7 +59,7 @@ https://rest-countries-app-xyz.vercel.app
 ## Deployment
 
 - The application is deployed on Vercel. Access it at:
-  [https://rest-countries-app-xyz.vercel.app]
+  [rest-countries-app-sandy.vercel.app]
 
 ## Project Structure
 
