@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useContext } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { LogOut, Search } from "lucide-react";
 import logo from "../assets/logo.jpg"; // Adjust the path to your logo
@@ -263,6 +262,57 @@ function Header({ onSearch, onFilter }) {
               onChange={(e) => onSearch(e.target.value)}
             />
           </div>
+          {/* Region Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
+              className="w-full flex items-center justify-between text-base font-medium rounded-lg bg-gray-100 border border-gray-200 px-3 py-2 text-gray-800 focus:outline-none hover:bg-gray-200"
+              aria-haspopup="menu"
+              aria-expanded={isRegionDropdownOpen}
+              aria-label="Filter by region"
+            >
+              {selectedRegion || "Filter by Region"}
+              <svg
+                className={`w-4 h-4 ${
+                  isRegionDropdownOpen ? "rotate-180" : ""
+                }`}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            {isRegionDropdownOpen && (
+              <div className="mt-2 w-full bg-white border border-gray-200 rounded-lg z-50">
+                <div className="p-1 space-y-0.5">
+                  <button
+                    onClick={() => handleRegionSelect("")}
+                    className="block w-full text-left py-2 px-3 rounded-lg text-base text-gray-800 hover:bg-gray-100"
+                  >
+                    All Regions
+                  </button>
+                  {regions.map((region) => (
+                    <RegionDropdownItem key={region} label={region} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Navigation Links */}
+          {menuItems.map((item) => (
+            <MenuItem key={item.path} {...item} isMobile={true} />
+          ))}
+          {/* User Greeting */}
+          {user && (
+            <span className="text-base font-medium text-gray-700 text-center">
+              Hi, {user.username}
+            </span>
+          )}
         </div>
       </div>
     </header>
